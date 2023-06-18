@@ -396,6 +396,19 @@ static LRESULT CALLBACK Config__DialogProc(HWND Window, UINT Message, WPARAM WPa
 		}
 		else if (Control == ID_DEFAULTS)
 		{
+			int mCallback = MessageBoxW(gDialogWindow,
+				L"Do you want to revert settings back to it\'s default values?",
+				L"Are you sure?",
+				MB_ICONQUESTION | MB_YESNO | MB_DEFBUTTON2);
+
+			switch (mCallback)
+			{
+			case IDYES:
+				break;
+			case IDNO:
+				return FALSE;
+				break;
+			}
 			Config_Defaults(Config);
 			Config__SetDialogValues(Window, Config);
 			if (gConfigShortcut.Control)

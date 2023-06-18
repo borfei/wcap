@@ -3,8 +3,6 @@ wcap
 
 Simple and efficient screen recording utility for Windows.
 
-Get latest binary here: [wcap.exe][] (**WARNING**: Windows Defender or other AV software might report false positive detection)
-
 Features
 ========
 
@@ -141,7 +139,7 @@ This is free and unencumbered software released into the public domain.
 Anyone is free to copy, modify, publish, use, compile, sell, or distribute this software, either in source code form or as
 a compiled binary, for any purpose, commercial or non-commercial, and by any means.
 
-[wcap.exe]: https://raw.githubusercontent.com/wiki/spiroth/wcap/wcap.exe
+[wcap.exe]: https://raw.githubusercontent.com/wiki/mmozeiko/wcap/wcap.exe
 [wgc]: https://blogs.windows.com/windowsdeveloper/2019/09/16/new-ways-to-do-screen-capture/
 [MSMFH264]: https://docs.microsoft.com/en-us/windows/win32/medfound/h-264-video-encoder
 [VS]: https://visualstudio.microsoft.com/vs/

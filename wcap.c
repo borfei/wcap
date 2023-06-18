@@ -331,11 +331,14 @@ static void StopRecording(void)
 	if (gConfig.OpenFolder)
 	{
 		ShowFileInFolder(gRecordingPath);
+	} else
+	{
+		ShowNotification(L"The video has been saved.", L"Recording Stopped", NIIF_INFO);
 	}
 
 	SetWindowPos(gWindow, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_HIDEWINDOW | SWP_NOMOVE | SWP_NOSIZE);
 	SetWindowLongW(gWindow, GWL_EXSTYLE, 0);
-
+	
 	UpdateTrayIcon(gIcon1);
 	UpdateTrayTitle(WCAP_TITLE);
 }

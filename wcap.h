@@ -10,7 +10,7 @@
 #include <intrin.h>
 
 #define WCAP_TITLE L"wcap"
-#define WCAP_URL   L"https://github.com/mmozeiko/wcap"
+#define WCAP_URL   L"https://github.com/spiroth/wcap"
 
 #ifdef _DEBUG
 #define Assert(Cond) do { if (!(Cond)) __debugbreak(); } while (0)

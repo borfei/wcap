@@ -737,6 +737,11 @@ void Config_Defaults(Config* Config)
 	HR(SHGetKnownFolderPath(&FOLDERID_Videos, KF_FLAG_DEFAULT, NULL, &VideoFolder));
 	StrCpyNW(Config->OutputFolder, VideoFolder, _countof(Config->OutputFolder));
 	CoTaskMemFree(VideoFolder);
+
+	DEVMODEW DisplayDevMode;
+	EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &DisplayDevMode);
+	Config->VideoMaxWidth = DisplayDevMode.dmPelsWidth;
+	Config->VideoMaxHeight = DisplayDevMode.dmPelsHeight;
 }
 
 static void Config__GetBool(LPCWSTR FileName, LPCWSTR Key, BOOL* Value)

@@ -20,21 +20,8 @@ jobs:
         shell: cmd
         run: cd repo && build.cmd
 
-      - name: Checkout wiki
-        uses: actions/checkout@v3
-        if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+      - name: Upload
+        uses: actions/upload-artifact@v3
         with:
-          repository: ${{github.repository}}.wiki
-          path: wiki
-
-      - name: Upload binary
-        if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
-        shell: cmd
-        run: |
-          copy repo\wcap.exe wiki\wcap.exe
-
-          cd wiki
-          git config --local user.email "actions@github.com"
-          git config --local user.name "GitHub Actions"
-          git commit --all --amend --no-edit
-          git push --force-with-lease
+          name: wcap
+          path: repo/wcap.exe

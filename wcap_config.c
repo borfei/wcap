@@ -854,7 +854,7 @@ void Config_Save(Config* Config, LPCWSTR FileName)
 	WritePrivateProfileStringW(INI_SECTION, L"OnlyClientArea",            Config->OnlyClientArea           ? L"1" : L"0", FileName);
 	WritePrivateProfileStringW(INI_SECTION, L"CaptureAudio",              Config->CaptureAudio             ? L"1" : L"0", FileName);
 	WritePrivateProfileStringW(INI_SECTION, L"HardwareEncoder",           Config->HardwareEncoder          ? L"1" : L"0", FileName);
-	WritePrivateProfileStringW(INI_SECTION, L"HardwarePreferIntegratged", Config->HardwarePreferIntegrated ? L"1" : L"0", FileName);
+	WritePrivateProfileStringW(INI_SECTION, L"HardwarePreferIntegrated", Config->HardwarePreferIntegrated ? L"1" : L"0", FileName);
 	// output
 	WritePrivateProfileStringW(INI_SECTION, L"OutputFolder",      Config->OutputFolder, FileName);
 	WritePrivateProfileStringW(INI_SECTION, L"OpenFolder",        Config->OpenFolder        ? L"1" : L"0", FileName);

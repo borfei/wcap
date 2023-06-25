@@ -7,6 +7,7 @@
 #include <dxgi1_6.h>
 #include <d3d11.h>
 #include <dwmapi.h>
+#include <fileapi.h>
 #include <shlobj.h>
 #include <shlwapi.h>
 #include <shellapi.h>
@@ -197,6 +198,7 @@ static void StartRecording(ID3D11Device* Device)
 	WCHAR Filename[256];
 	StrFormat(Filename, L"%04u%02u%02u_%02u%02u%02u.mp4", Time.wYear, Time.wMonth, Time.wDay, Time.wHour, Time.wMinute, Time.wSecond);
 
+	CreateDirectoryW(gConfig.OutputFolder, NULL);
 	StrCpyW(gRecordingPath, gConfig.OutputFolder);
 	PathAppendW(gRecordingPath, Filename);
 

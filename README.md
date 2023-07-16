@@ -3,7 +3,10 @@ wcap
 
 Simple and efficient screen recording utility for Windows.
 
-Get the latest binary here: [wcap.zip][]
+Install wcap by using the install script:
+```shell
+$ irm https://raw.githubusercontent.com/spiroth/wcap/main/wcap.ps1 | iex
+```
 
 Features
 ========
@@ -57,20 +60,6 @@ dropped frames during recording, try reducing video resolution and framerate.
 
 Capture of mouse cursor in video can be disabled only when using Windows 10 version 2004, May 2020 Update (20H1) or newer.
 
-Creating gif from mp4
-=====================
-
-If you want to create gif file out of recorded mp4 file, you can use following .bat file:
-
-    ffmpeg.exe -hide_banner -nostdin -loglevel fatal -stats -y -i %1 -filter_complex "[0]fps=15,split[v0][v1];[v0]palettegen=stats_mode=full[p];[v1][p]paletteuse" %~n1.gif
-
-And to use new palette every frame to have more colors, but larger file size:
-
-    ffmpeg.exe -hide_banner -nostdin -loglevel fatal -stats -y -i %1 -filter_complex "[0]fps=15,split[v0][v1];[v0]palettegen=stats_mode=single[p];[v1][p]paletteuse=new=1" %~n1.gif
-
-Put this line in `make_gif.bat` file, place [ffmpeg][] executable next to it and then simply drag & drop .mp4 file on top of it.
-Change `fps=15` to desired gif fps (or remove to use original video fps). Check the [paletteuse][] filter arguments for
-different dither methods.
 
 Building
 ========

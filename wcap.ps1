@@ -106,5 +106,3 @@ if ($WCAP_ADMIN) {
 }
 
 "wcap is installed successfully, restart your shell session to apply changes for PATH."
-"Installation finished, exiting code 0."
-exit 0

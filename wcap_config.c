@@ -396,12 +396,12 @@ static LRESULT CALLBACK Config__DialogProc(HWND Window, UINT Message, WPARAM WPa
 		}
 		else if (Control == ID_DEFAULTS)
 		{
-			int mCallback = MessageBoxW(gDialogWindow,
+			int Callback = MessageBoxW(gDialogWindow,
 				L"Do you want to revert settings back to it\'s default values?",
 				L"Are you sure?",
 				MB_ICONQUESTION | MB_YESNO | MB_DEFBUTTON2);
 
-			switch (mCallback)
+			switch (Callback)
 			{
 			case IDYES:
 				break;

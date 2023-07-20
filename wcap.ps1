@@ -1,13 +1,6 @@
 "wcap - Simple and efficient screen recording utility for Windows 10 and 11"
 "This is free and unencumbered software released into the public domain."; ""
 
-function Write-Error($message) {
-    # Had to use this function to suppress the "Write-Error" message from the command-line.
-    [Console]::ForegroundColor = 'red'
-    [Console]::Error.WriteLine("ERROR: $message")
-    [Console]::ResetColor()
-}
-
 $WCAP_ADMIN = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 
 $WCAP_DOWNLOAD_URL = "https://nightly.link/spiroth/wcap/workflows/wcap/main/wcap.zip"
@@ -23,8 +16,7 @@ $WCAP_EXTRA_INCLUDE_UNINSTALL = $false # Temporarily disabled in the meantime
 $WCAP_EXTRA_RUN_AFTER_INSTALL = $false
 
 if (-not($IsWindows)) {
-	Write-Error "wcap is unavailable for this platform."
-	exit 1
+	throw "wcap is unavailable for this platform."
 }
 if (-not(Get-Command "curl" -errorAction SilentlyContinue)) {
     Write-Warning "cURL is not available, using Invoke-WebRequest as fallback."
@@ -100,8 +92,7 @@ if ($WCAP_DOWNLOAD_EXEC -eq "curl") {
 } elseif ($WCAP_DOWNLOAD_EXEC -eq "powershell") {
     Invoke-WebRequest $WCAP_DOWNLOAD_URL -OutFile "$WCAP_DOWNLOAD_PATH\wcap.zip"
 } else {
-    Write-Error "Invalid download option: $WCAP_DOWNLOAD_EXEC"
-    exit 1
+    throw "Invalid download option: $WCAP_DOWNLOAD_EXEC"
 }
 
 Write-Output "Installing wcap to $WCAP_INSTALL_PATH"
@@ -137,8 +128,7 @@ if ($WCAP_EXTRA_INCLUDE_UNINSTALL) {
     } elseif ($WCAP_DOWNLOAD_EXEC -eq "powershell") {
         Invoke-WebRequest $WCAP_UNINSTALL_URL -OutFile "$WCAP_INSTALL_PATH\uninstall.ps1"
     } else {
-        Write-Error "Invalid download option: $WCAP_DOWNLOAD_EXEC"
-        exit 1
+        throw "Invalid download option: $WCAP_DOWNLOAD_EXEC"
     }
 
     Write-Output "Registering uninstall script to the program information"
@@ -172,8 +162,9 @@ if ($WCAP_EXTRA_INCLUDE_UNINSTALL) {
     $null = New-ItemProperty -Path $WCAP_REGISTRY_PATH -Name "URLInfoAbout" -Value $WCAP_REGISTRY_URL_INFO -PropertyType String -Force
 }
 if ($WCAP_EXTRA_RUN_AFTER_INSTALL) {
-    Write-Output "Starting wcap"
-    start "$WCAP_INSTALL_PATH\wcap.exe"
+    $WCAP_EXECUTABLE = "$WCAP_INSTALL_PATH\wcap.exe"
+    Write-Output "Starting $WCAP_EXECUTABLE"
+    Start-Process $WCAP_EXECUTABLE
 }
 
 ""; "wcap is installed successfully, exiting."

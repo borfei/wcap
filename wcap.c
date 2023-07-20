@@ -8,9 +8,11 @@
 #include <d3d11.h>
 #include <dwmapi.h>
 #include <fileapi.h>
+#include <knownfolders.h>
 #include <shlobj.h>
 #include <shlwapi.h>
 #include <shellapi.h>
+#include <strsafe.h>
 #include <windowsx.h>
 
 #pragma comment (lib, "ntdll.lib")
@@ -1265,8 +1267,13 @@ void WinMainCRTStartup()
 		ExitProcess(0);
 	}
 
-	GetModuleFileNameW(NULL, gConfigPath, _countof(gConfigPath));
-	PathRenameExtensionW(gConfigPath, L".ini");
+	PWSTR ConfigDirectoryPath;
+	WCHAR ConfigModuleFilename[64];
+	SHGetKnownFolderPath(&FOLDERID_RoamingAppData, 0, NULL, &ConfigDirectoryPath);
+	GetModuleFileNameW(NULL, ConfigModuleFilename, _countof(ConfigModuleFilename));
+	StringCchCopyW(ConfigModuleFilename, STRSAFE_MAX_CCH, PathFindFileNameW(ConfigModuleFilename));
+	PathRenameExtensionW(ConfigModuleFilename, L".ini");
+	PathCombineW((wchar_t*)gConfigPath, ConfigDirectoryPath, ConfigModuleFilename);
 
 	HR(CoInitializeEx(0, COINIT_APARTMENTTHREADED));
 

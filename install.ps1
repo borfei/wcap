@@ -16,9 +16,11 @@ $WCAP_EXTRA_CREATE_STARTUP = $true
 $WCAP_EXTRA_INCLUDE_UNINSTALL = $false
 $WCAP_EXTRA_RUN_AFTER_INSTALL = $false
 
-if (-not($IsWindows)) {
-	Write-Error "wcap is unavailable for this platform, exiting."
-    return
+if ($PSVersionTable.PSVersion.Major -gt 5) {
+	if (-not($IsWindows)) {
+		Write-Error "wcap is unavailable for this platform."
+		return
+	}
 }
 if (-not(Get-Command "curl" -errorAction SilentlyContinue)) {
     Write-Warning "cURL is not available, using Invoke-WebRequest as fallback."
@@ -159,7 +161,7 @@ if ($WCAP_EXTRA_INCLUDE_UNINSTALL) {
     $WCAP_REGISTRY_NO_MODIFY = 1
     $WCAP_REGISTRY_NO_REPAIR = 1
     $WCAP_REGISTRY_PUBLISHER = "spir0th"
-    $WCAP_REGISTRY_UNINSTALL = "powershell `"$WCAP_INSTALL_PATH\uninstall.ps1`""
+    $WCAP_REGISTRY_UNINSTALL = "powershell -Command `"Set-ExecutionPolicy Unrestricted -Scope Process; $WCAP_INSTALL_PATH\uninstall.ps1`""
     $WCAP_REGISTRY_URL_INFO = "https://github.com/spiroth/wcap"
 
     if ($WCAP_IS_ADMIN) {

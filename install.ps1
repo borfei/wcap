@@ -21,6 +21,8 @@ if ($PSVersionTable.PSVersion.Major -gt 5) {
 		Write-Error "wcap is unavailable for this platform."
 		return
 	}
+} elseif ($PSVersionTable.PSVersion.Major -lt 5) {
+    Remove-item alias:curl # Workaround to download files using cURL in Powershell 5.x and older
 }
 if (-not(Get-Command "curl" -errorAction SilentlyContinue)) {
     Write-Warning "cURL is not available, using Invoke-WebRequest as fallback."

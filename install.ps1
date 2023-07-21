@@ -130,7 +130,7 @@ if ($WCAP_EXTRA_CREATE_STARTUP) {
         $null = New-Item $WCAP_REGISTRY_PATH -Force
     }
     try {
-        Get-ItemProperty -Path $WCAP_REGISTRY_PATH -Name "wcap" -ErrorAction Stop
+        $null = Get-ItemProperty -Path $WCAP_REGISTRY_PATH -Name "wcap" -ErrorAction Stop
         Write-Warning "A startup entry has already been created for wcap."
     } catch {
         $null = New-ItemProperty -Path $WCAP_REGISTRY_PATH -Name "wcap" -Value $WCAP_REGISTRY_VALUE -PropertyType String -Force

@@ -42,10 +42,10 @@ if (-not($WCAP_INSTALL_PROCEED)) {
     return
 } else {
     Write-Output "" # A newline should be expected before reviewing.
+    Write-Output "Before starting the actual installation, review the tasks first:"
 }
 
 while (-not($WCAP_INSTALL_REVIEW)) {
-    Write-Output "Before starting the actual installation, review the tasks first:"
     Write-Output "  - URL: $WCAP_DOWNLOAD_URL"
     Write-Output "  - Download to: $WCAP_DOWNLOAD_PATH"
     Write-Output "  - Install at: $WCAP_INSTALL_PATH"

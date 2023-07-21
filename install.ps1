@@ -1,7 +1,7 @@
 "wcap - Simple and efficient screen recording utility for Windows 10 and 11"
 "This is free and unencumbered software released into the public domain."; ""
 
-$WCAP_ADMIN = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+$WCAP_IS_ADMIN = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 
 $WCAP_DOWNLOAD_URL = "https://nightly.link/spiroth/wcap/workflows/wcap/main/wcap.zip"
 $WCAP_DOWNLOAD_PATH = "$env:TEMP\wcap"
@@ -22,7 +22,7 @@ if (-not(Get-Command "curl" -errorAction SilentlyContinue)) {
     Write-Warning "cURL is not available, using Invoke-WebRequest as fallback."
     $WCAP_DOWNLOAD_EXEC = "powershell"
 }
-if ($WCAP_ADMIN) {
+if ($WCAP_IS_ADMIN) {
     # Use Program Files as default install path if this script has administrative rights.
     # Warn the user that this script is running in Administrator mode.
     $WCAP_INSTALL_PATH = "$env:PROGRAMFILES\wcap"
@@ -106,7 +106,7 @@ Remove-Item $WCAP_DOWNLOAD_PATH -Recurse -Force
 
 if ($WCAP_EXTRA_ADD_PATH) {
     Write-Output "Adding wcap to the PATH environment variable"
-    $WCAP_ENV_SCOPE = if ($WCAP_ADMIN) { [EnvironmentVariableTarget]::Machine } else { [EnvironmentVariableTarget]::User }
+    $WCAP_ENV_SCOPE = if ($WCAP_IS_ADMIN) { [EnvironmentVariableTarget]::Machine } else { [EnvironmentVariableTarget]::User }
     $WCAP_ENV_PATH = [Environment]::GetEnvironmentVariable("Path", $WCAP_ENV_SCOPE)
 
     if (-not($WCAP_ENV_PATH -split ";" -contains "$WCAP_INSTALL_PATH")) {
@@ -143,7 +143,7 @@ if ($WCAP_EXTRA_INCLUDE_UNINSTALL) {
     $WCAP_REGISTRY_UNINSTALL = "`"$env:SystemRoot\System32\cmd.exe`" /c `"$WCAP_INSTALL_PATH\uninstall.cmd`""
     $WCAP_REGISTRY_URL_INFO = "https://github.com/spiroth/wcap"
 
-    if ($WCAP_ADMIN) {
+    if ($WCAP_IS_ADMIN) {
         # Use the HKEY_LOCAL_MACHINE key to store the information on system-wide instead
         $WCAP_REGISTRY_PATH = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\wcap"
     }

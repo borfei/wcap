@@ -22,7 +22,11 @@ if ($PSVersionTable.PSVersion.Major -gt 5) {
 		return
 	}
 } elseif ($PSVersionTable.PSVersion.Major -le 5) {
-    Remove-Item alias:curl # Workaround to download files using cURL in Powershell 5.x and older
+    try {
+        Get-Item alias:curl
+    } catch {
+        Remove-Item alias:curl # Workaround to download files using cURL in Powershell 5.x and older
+    }
 }
 if (-not(Get-Command "curl" -errorAction SilentlyContinue)) {
     Write-Warning "cURL is not available, using Invoke-WebRequest as fallback."

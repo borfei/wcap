@@ -12,11 +12,13 @@ $WCAP_INSTALL_PROCEED = $false
 $WCAP_INSTALL_REVIEW = $false
 
 $WCAP_EXTRA_ADD_PATH = $true
-$WCAP_EXTRA_INCLUDE_UNINSTALL = $false # Temporarily disabled in the meantime
+$WCAP_EXTRA_CREATE_STARTUP = $true
+$WCAP_EXTRA_INCLUDE_UNINSTALL = $false
 $WCAP_EXTRA_RUN_AFTER_INSTALL = $false
 
 if (-not($IsWindows)) {
-	throw "wcap is unavailable for this platform."
+	Write-Error "wcap is unavailable for this platform, exiting."
+    return
 }
 if (-not(Get-Command "curl" -errorAction SilentlyContinue)) {
     Write-Warning "cURL is not available, using Invoke-WebRequest as fallback."
@@ -32,8 +34,8 @@ if ($WCAP_IS_ADMIN) {
 $WCAP_INSTALL_PROCEED = if ((Read-Host "You are now installing wcap, proceed? (Y/n)").ToLower() -eq "y") { $true } else { $false }
 
 if (-not($WCAP_INSTALL_PROCEED)) {
-    Write-Output "Installation aborted, exiting with code 0."
-    exit 0
+    Write-Output "Installation aborted, exiting."
+    return
 } else {
     Write-Output "" # A newline should be expected before reviewing.
 }
@@ -45,7 +47,8 @@ while (-not($WCAP_INSTALL_REVIEW)) {
     Write-Output "  - Install at: $WCAP_INSTALL_PATH"
     Write-Output "Review the additional tasks as well:"
     Write-Output "  - Add to PATH environment variable: $WCAP_EXTRA_ADD_PATH"
-    # Write-Output "  - Include uninstall script: $WCAP_EXTRA_INCLUDE_UNINSTALL"
+    Write-Output "  - Create a startup entry: $WCAP_EXTRA_CREATE_STARTUP"
+    Write-Output "  - Include uninstall script: $WCAP_EXTRA_INCLUDE_UNINSTALL"
     Write-Output "  - Run program after installation: $WCAP_EXTRA_RUN_AFTER_INSTALL"; ""
     $REVIEW_OK = (Read-Host "Begin the installation? (Y/n/c)").ToLower()
 
@@ -54,8 +57,8 @@ while (-not($WCAP_INSTALL_REVIEW)) {
         $WCAP_INSTALL_REVIEW = $true
         continue
     } elseif ($REVIEW_OK -eq "n") {
-        Write-Output "Installation aborted, exiting with code 0."
-        exit 0
+        Write-Output "Installation aborted, exiting."
+        return
         break
     } elseif ($REVIEW_OK -eq "c") {
         $WCAP_OLD_DOWNLOAD_PATH = $WCAP_DOWNLOAD_PATH
@@ -65,7 +68,8 @@ while (-not($WCAP_INSTALL_REVIEW)) {
         $WCAP_INSTALL_PATH = Read-Host "Install at [$WCAP_INSTALL_PATH]"
 
         $WCAP_EXTRA_ADD_PATH = if ((Read-Host "Add wcap to PATH environment variable? (Y/n)").ToLower() -eq "y") { $true } else { $false }
-        # $WCAP_EXTRA_INCLUDE_UNINSTALL = if ((Read-Host "Include uninstall script? (Y/n)").ToLower() -eq "y") { $true } else { $false }
+        $WCAP_EXTRA_CREATE_STARTUP = if ((Read-Host "Create a startup entry for wcap? (Y/n)").ToLower() -eq "y") { $true } else { $false }
+        $WCAP_EXTRA_INCLUDE_UNINSTALL = if ((Read-Host "Include uninstall script? (Y/n)").ToLower() -eq "y") { $true } else { $false }
         $WCAP_EXTRA_RUN_AFTER_INSTALL = if ((Read-Host "Run program after installation? (Y/n)").ToLower() -eq "y") { $true } else { $false }; ""
 
         if (-not($WCAP_DOWNLOAD_PATH)) {
@@ -117,9 +121,24 @@ if ($WCAP_EXTRA_ADD_PATH) {
         Write-Warning "wcap has already been added into the PATH environment variable."
     }
 }
+if ($WCAP_EXTRA_CREATE_STARTUP) {
+    Write-Output "Creating startup entry for wcap"
+    $WCAP_REGISTRY_PATH = "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
+    $WCAP_REGISTRY_VALUE = "$WCAP_INSTALL_PATH\wcap.exe"
+
+    if (-not(Test-Path $WCAP_REGISTRY_PATH -PathType Container)) {
+        $null = New-Item $WCAP_REGISTRY_PATH -Force
+    }
+    try {
+        Get-ItemProperty -Path $WCAP_REGISTRY_PATH -Name "wcap" -ErrorAction Stop
+        Write-Warning "A startup entry has already been created for wcap."
+    } catch {
+        $null = New-ItemProperty -Path $WCAP_REGISTRY_PATH -Name "wcap" -Value $WCAP_REGISTRY_VALUE -PropertyType String -Force
+    }
+}
 if ($WCAP_EXTRA_INCLUDE_UNINSTALL) {
-    Write-Output "Downloading uninstall script from URLs"
-    $WCAP_UNINSTALL_URL = "https://dl.dropboxusercontent.com/s/3pxeygqqw519qzv/uninstall.ps1"
+    Write-Output "Downloading uninstall script"
+    $WCAP_UNINSTALL_URL = "https://raw.githubusercontent.com/spiroth/wcap/main/uninstall.ps1"
 
     if ($WCAP_DOWNLOAD_EXEC -eq "curl") {
         Push-Location $WCAP_INSTALL_PATH
@@ -131,7 +150,7 @@ if ($WCAP_EXTRA_INCLUDE_UNINSTALL) {
         throw "Invalid download option: $WCAP_DOWNLOAD_EXEC"
     }
 
-    Write-Output "Registering uninstall script to the program information"
+    Write-Output "Adding wcap to Apps & Features"
     $WCAP_REGISTRY_PATH = "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\wcap"
     $WCAP_REGISTRY_COMMENTS = "wcap"
     $WCAP_REGISTRY_DISPLAY_ICON = "$WCAP_INSTALL_PATH\wcap.exe,0"
@@ -140,7 +159,7 @@ if ($WCAP_EXTRA_INCLUDE_UNINSTALL) {
     $WCAP_REGISTRY_NO_MODIFY = 1
     $WCAP_REGISTRY_NO_REPAIR = 1
     $WCAP_REGISTRY_PUBLISHER = "spir0th"
-    $WCAP_REGISTRY_UNINSTALL = "`"$env:SystemRoot\System32\cmd.exe`" /c `"$WCAP_INSTALL_PATH\uninstall.cmd`""
+    $WCAP_REGISTRY_UNINSTALL = "powershell `"$WCAP_INSTALL_PATH\uninstall.ps1`""
     $WCAP_REGISTRY_URL_INFO = "https://github.com/spiroth/wcap"
 
     if ($WCAP_IS_ADMIN) {
@@ -149,17 +168,18 @@ if ($WCAP_EXTRA_INCLUDE_UNINSTALL) {
     }
     if (-not(Test-Path $WCAP_REGISTRY_PATH -PathType Container)) {
         $null = New-Item $WCAP_REGISTRY_PATH -Force
+        $null = New-ItemProperty -Path $WCAP_REGISTRY_PATH -Name "Comments" -Value $WCAP_REGISTRY_COMMENTS -PropertyType String -Force
+        $null = New-ItemProperty -Path $WCAP_REGISTRY_PATH -Name "DisplayIcon" -Value $WCAP_REGISTRY_DISPLAY_ICON -PropertyType String -Force
+        $null = New-ItemProperty -Path $WCAP_REGISTRY_PATH -Name "DisplayName" -Value $WCAP_REGISTRY_DISPLAY_NAME -PropertyType String -Force
+        $null = New-ItemProperty -Path $WCAP_REGISTRY_PATH -Name "InstallLocation" -Value $WCAP_REGISTRY_INSTALL_DIR -PropertyType String -Force
+        $null = New-ItemProperty -Path $WCAP_REGISTRY_PATH -Name "NoModify" -Value $WCAP_REGISTRY_NO_MODIFY -PropertyType Dword -Force
+        $null = New-ItemProperty -Path $WCAP_REGISTRY_PATH -Name "NoRepair" -Value $WCAP_REGISTRY_NO_REPAIR -PropertyType Dword -Force
+        $null = New-ItemProperty -Path $WCAP_REGISTRY_PATH -Name "Publisher" -Value $WCAP_REGISTRY_PUBLISHER -PropertyType String -Force
+        $null = New-ItemProperty -Path $WCAP_REGISTRY_PATH -Name "UninstallString" -Value $WCAP_REGISTRY_UNINSTALL -PropertyType String -Force
+        $null = New-ItemProperty -Path $WCAP_REGISTRY_PATH -Name "URLInfoAbout" -Value $WCAP_REGISTRY_URL_INFO -PropertyType String -Force
+    } else {
+        Write-Warning "wcap has already been added to Apps & Features."
     }
-
-    $null = New-ItemProperty -Path $WCAP_REGISTRY_PATH -Name "Comments" -Value $WCAP_REGISTRY_COMMENTS -PropertyType String -Force
-    $null = New-ItemProperty -Path $WCAP_REGISTRY_PATH -Name "DisplayIcon" -Value $WCAP_REGISTRY_DISPLAY_ICON -PropertyType String -Force
-    $null = New-ItemProperty -Path $WCAP_REGISTRY_PATH -Name "DisplayName" -Value $WCAP_REGISTRY_DISPLAY_NAME -PropertyType String -Force
-    $null = New-ItemProperty -Path $WCAP_REGISTRY_PATH -Name "InstallLocation" -Value $WCAP_REGISTRY_INSTALL_DIR -PropertyType String -Force
-    $null = New-ItemProperty -Path $WCAP_REGISTRY_PATH -Name "NoModify" -Value $WCAP_REGISTRY_NO_MODIFY -PropertyType Dword -Force
-    $null = New-ItemProperty -Path $WCAP_REGISTRY_PATH -Name "NoRepair" -Value $WCAP_REGISTRY_NO_REPAIR -PropertyType Dword -Force
-    $null = New-ItemProperty -Path $WCAP_REGISTRY_PATH -Name "Publisher" -Value $WCAP_REGISTRY_PUBLISHER -PropertyType String -Force
-    $null = New-ItemProperty -Path $WCAP_REGISTRY_PATH -Name "UninstallString" -Value $WCAP_REGISTRY_UNINSTALL -PropertyType String -Force
-    $null = New-ItemProperty -Path $WCAP_REGISTRY_PATH -Name "URLInfoAbout" -Value $WCAP_REGISTRY_URL_INFO -PropertyType String -Force
 }
 if ($WCAP_EXTRA_RUN_AFTER_INSTALL) {
     $WCAP_EXECUTABLE = "$WCAP_INSTALL_PATH\wcap.exe"

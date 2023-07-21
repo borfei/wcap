@@ -158,7 +158,7 @@ if ($WCAP_EXTRA_INCLUDE_UNINSTALL) {
         throw "Invalid download option: $WCAP_DOWNLOAD_EXEC"
     }
 
-    Write-Output "Adding wcap to Apps & Features"
+    Write-Verbose "Adding wcap to Apps & Features"
     $WCAP_REGISTRY_PATH = "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\wcap"
     $WCAP_REGISTRY_COMMENTS = "wcap"
     $WCAP_REGISTRY_DISPLAY_ICON = "$WCAP_INSTALL_PATH\wcap.exe,0"
@@ -186,7 +186,7 @@ if ($WCAP_EXTRA_INCLUDE_UNINSTALL) {
         $null = New-ItemProperty -Path $WCAP_REGISTRY_PATH -Name "UninstallString" -Value $WCAP_REGISTRY_UNINSTALL -PropertyType String -Force
         $null = New-ItemProperty -Path $WCAP_REGISTRY_PATH -Name "URLInfoAbout" -Value $WCAP_REGISTRY_URL_INFO -PropertyType String -Force
     } else {
-        Write-Warning "wcap has already been added to Apps & Features."
+        Write-Verbose "wcap has already been added to Apps & Features."
     }
 }
 if ($WCAP_EXTRA_RUN_AFTER_INSTALL) {

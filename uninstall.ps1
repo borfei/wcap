@@ -19,7 +19,7 @@ if ($PSVersionTable.PSVersion.Major -gt 5) {
 }
 if (Test-Path "$env:LOCALAPPDATA\wcap\wcap.exe" -PathType Leaf) {
     $WCAP_INSTALL_PATH = "$env:LOCALAPPDATA\wcap"
-} elseif (Test-Path "$env:PROGRAMFILES\wcap\wcap.exe" -PathType Leaf -and $WCAP_IS_ADMIN) {
+} elseif ((Test-Path "$env:PROGRAMFILES\wcap\wcap.exe" -PathType Leaf) -and $WCAP_IS_ADMIN) {
     $WCAP_INSTALL_PATH = "$env:PROGRAMFILES\wcap"
 } elseif (Test-Path "wcap.exe" -PathType Leaf) {
     $WCAP_INSTALL_PATH = Get-Location

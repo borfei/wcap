@@ -1,199 +1,84 @@
-"wcap - Simple and efficient screen recording utility for Windows 10 and 11"
-"This is free and unencumbered software released into the public domain."; ""
+[CmdletBinding()] param([switch]$NoRunAfterInstall, [switch]$NoModifyPATH, [switch]$NoStartupEntry)
+$WcapDownloadUrl = "https://nightly.link/spiroth/wcap/workflows/wcap/main/wcap.zip"
+$WcapDownloadPath = "$env:TEMP\wcap"
+$WcapDownloadProgram = "curl" # available options: curl, powershell
 
-$WCAP_IS_ADMIN = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-
-$WCAP_DOWNLOAD_URL = "https://nightly.link/spiroth/wcap/workflows/wcap/main/wcap.zip"
-$WCAP_DOWNLOAD_PATH = "$env:TEMP\wcap"
-$WCAP_DOWNLOAD_EXEC = "curl" # Available options: curl, powershell
-
-$WCAP_INSTALL_PATH = "$env:LOCALAPPDATA\wcap"
-$WCAP_INSTALL_PROCEED = $false
-$WCAP_INSTALL_REVIEW = $false
-
-$WCAP_EXTRA_ADD_PATH = $true
-$WCAP_EXTRA_CREATE_STARTUP = $true
-$WCAP_EXTRA_RUN_AFTER_INSTALL = $false
+$WcapInstallPath = "$env:LOCALAPPDATA\wcap"
+$WcapInstallExecutable = "$WcapInstallPath\wcap.exe"
 
 if ($PSVersionTable.PSVersion.Major -gt 5) {
 	if (-not($IsWindows)) {
-		Write-Error "wcap is unavailable for this platform."
+		Write-Error "This program is unavailable for non-Windows platforms."
 		return
 	}
 } elseif ($PSVersionTable.PSVersion.Major -le 5) {
     try {
         Get-Item alias:curl
     } catch {
-        Remove-Item alias:curl # Workaround to download files using cURL in Powershell 5.x and older
+        Remove-Item alias:curl # workaround to download files using cURL in Powershell 5.x and older
     }
 }
 if (-not(Get-Command "curl" -errorAction SilentlyContinue)) {
     Write-Warning "cURL is not available, using Invoke-WebRequest as fallback."
-    $WCAP_DOWNLOAD_EXEC = "powershell"
+    $WcapDownloadProgram = "powershell"
 }
-if ($WCAP_IS_ADMIN) {
-    # Use Program Files as default install path if this script has administrative rights.
-    # Warn the user that this script is running in Administrator mode.
-    $WCAP_INSTALL_PATH = "$env:PROGRAMFILES\wcap"
-    Write-Warning "This script is running with administrative rights."
+if (-not(Test-Path $WcapDownloadPath -PathType Container)) {
+    Write-Verbose "Creating directory $WcapDownloadPath"
+    $null = New-Item $WcapDownloadPath -ItemType Directory
 }
-
-$WCAP_INSTALL_PROCEED = if ((Read-Host "You are now installing wcap, proceed? (Y/n)").ToLower() -eq "y") { $true } else { $false }
-
-if (-not($WCAP_INSTALL_PROCEED)) {
-    Write-Output "Installation aborted, exiting."
-    return
+if ($WcapDownloadProgram -eq "curl") {
+    Push-Location $WcapDownloadPath
+    Write-Verbose "Downloading $WcapDownloadUrl using cURL"
+    curl -sS -L $WcapDownloadUrl -o "wcap.zip"
+    Pop-Location
+} elseif ($WcapDownloadProgram -eq "powershell") {
+    Write-Verbose "Downloading $WcapDownloadUrl using Invoke-WebRequest"
+    Invoke-WebRequest $WcapDownloadUrl -OutFile "$WcapDownloadPath\wcap.zip"
 } else {
-    Write-Output "" # A newline should be expected before reviewing.
-    Write-Output "Before starting the actual installation, review the tasks first:"
+    Write-Error "No specified program to download files."
+    return
 }
+if (-not(Test-Path $WcapInstallPath -PathType Container)) {
+    Write-Verbose "Creating destination path $WcapInstallPath"
+    $null = New-Item $WcapInstallPath -ItemType Directory
+}
+try {
+    Write-Verbose "Extracting $WcapDownloadPath\wcap.zip to $WcapInstallPath"
+    Expand-Archive "$WcapDownloadPath\wcap.zip" -DestinationPath $WcapInstallPath -Force
+    Remove-Item $WcapDownloadPath -Recurse -Force
+} catch {
+    Write-Error "There was something wrong installing wcap:"
+    Write-Error "   $_"
+    return
+}
+if (-not($NoModifyPATH)) {
+    $WcapEnvUserPath = [Environment]::GetEnvironmentVariable("Path", [EnvironmentVariableTarget]::User)
+    $WcapEnvProcessPath = [Environment]::GetEnvironmentVariable("Path", [EnvironmentVariableTarget]::Process)
 
-while (-not($WCAP_INSTALL_REVIEW)) {
-    Write-Output "  - URL: $WCAP_DOWNLOAD_URL"
-    Write-Output "  - Download to: $WCAP_DOWNLOAD_PATH"
-    Write-Output "  - Install at: $WCAP_INSTALL_PATH"
-    Write-Output "Review the additional tasks as well:"
-    Write-Output "  - Add to PATH environment variable: $WCAP_EXTRA_ADD_PATH"
-    Write-Output "  - Create a startup entry: $WCAP_EXTRA_CREATE_STARTUP"
-    Write-Output "  - Run program after installation: $WCAP_EXTRA_RUN_AFTER_INSTALL"; ""
-    $REVIEW_OK = (Read-Host "Begin the installation? (Y/n/c)").ToLower()
-
-    if ($REVIEW_OK -eq "y") {
-        ""; Write-Output "Installation started, do not close this process!"
-        $WCAP_INSTALL_REVIEW = $true
-        continue
-    } elseif ($REVIEW_OK -eq "n") {
-        Write-Output "Installation aborted, exiting."
-        return
-        break
-    } elseif ($REVIEW_OK -eq "c") {
-        $WCAP_OLD_DOWNLOAD_PATH = $WCAP_DOWNLOAD_PATH
-        $WCAP_OLD_INSTALL_PATH = $WCAP_INSTALL_PATH
-        
-        $WCAP_DOWNLOAD_PATH = Read-Host "Download to [$WCAP_DOWNLOAD_PATH]"
-        $WCAP_INSTALL_PATH = Read-Host "Install at [$WCAP_INSTALL_PATH]"
-
-        $WCAP_EXTRA_ADD_PATH = if ((Read-Host "Add wcap to PATH environment variable? (Y/n)").ToLower() -eq "y") { $true } else { $false }
-        $WCAP_EXTRA_CREATE_STARTUP = if ((Read-Host "Create a startup entry for wcap? (Y/n)").ToLower() -eq "y") { $true } else { $false }
-        $WCAP_EXTRA_RUN_AFTER_INSTALL = if ((Read-Host "Run program after installation? (Y/n)").ToLower() -eq "y") { $true } else { $false }; ""
-
-        if (-not($WCAP_DOWNLOAD_PATH)) {
-            $WCAP_DOWNLOAD_PATH = $WCAP_OLD_DOWNLOAD_PATH
-        }
-        if (-not($WCAP_INSTALL_PATH)) {
-            $WCAP_INSTALL_PATH = $WCAP_OLD_INSTALL_PATH
-        }
-
-        continue
+    if (-not($WcapEnvUserPath -split ";" -contains "$WcapInstallPath")) {
+        Write-Verbose "Adding wcap to user's PATH environment variable"
+        [Environment]::SetEnvironmentVariable("Path", "$WcapEnvUserPath;$WcapInstallPath", [EnvironmentVariableTarget]::User)
+    }
+    if (-not($WcapEnvProcessPath -split ";" -contains "$WcapInstallPath")) {
+        Write-Verbose "Adding wcap to process' PATH environment variable"
+        [Environment]::SetEnvironmentVariable("Path", "$WcapEnvProcessPath;$WcapInstallPath", [EnvironmentVariableTarget]::Process)
     }
 }
+if (-not($NoStartupEntry)) {
+    $WcapRegStartupPath = "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
 
-if (-not(Test-Path $WCAP_DOWNLOAD_PATH -PathType Container)) {
-    $null = New-Item $WCAP_DOWNLOAD_PATH -ItemType Directory
-}
-
-Write-Output "Downloading wcap from $WCAP_DOWNLOAD_URL"
-
-if ($WCAP_DOWNLOAD_EXEC -eq "curl") {
-    Push-Location $WCAP_DOWNLOAD_PATH
-    curl -sS -L $WCAP_DOWNLOAD_URL -o "wcap.zip"
-    Pop-Location
-} elseif ($WCAP_DOWNLOAD_EXEC -eq "powershell") {
-    Invoke-WebRequest $WCAP_DOWNLOAD_URL -OutFile "$WCAP_DOWNLOAD_PATH\wcap.zip"
-} else {
-    Write-Error "Invalid download option: $WCAP_DOWNLOAD_EXEC"
-    return
-}
-
-Write-Output "Installing wcap to $WCAP_INSTALL_PATH"
-
-if (-not(Test-Path $WCAP_INSTALL_PATH -PathType Container)) {
-    $null = New-Item $WCAP_INSTALL_PATH -ItemType Directory
-}
-
-Expand-Archive -Path "$WCAP_DOWNLOAD_PATH\wcap.zip" -DestinationPath $WCAP_INSTALL_PATH -Force
-Remove-Item $WCAP_DOWNLOAD_PATH -Recurse -Force
-
-Write-Output "Adding program to Apps & Features"
-$WCAP_UNINSTALL_URL = "https://raw.githubusercontent.com/spiroth/wcap/main/uninstall.ps1"
-
-if ($WCAP_DOWNLOAD_EXEC -eq "curl") {
-    Push-Location $WCAP_INSTALL_PATH
-    curl -sS -L $WCAP_UNINSTALL_URL -o "uninstall.ps1"
-    Pop-Location
-} elseif ($WCAP_DOWNLOAD_EXEC -eq "powershell") {
-    Invoke-WebRequest $WCAP_UNINSTALL_URL -OutFile "$WCAP_INSTALL_PATH\uninstall.ps1"
-} else {
-    Write-Error "Invalid download option: $WCAP_DOWNLOAD_EXEC"
-    return
-}
-
-$WCAP_REGISTRY_PATH = "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\wcap"
-$WCAP_REGISTRY_COMMENTS = "wcap"
-$WCAP_REGISTRY_DISPLAY_ICON = "$WCAP_INSTALL_PATH\wcap.exe,0"
-$WCAP_REGISTRY_DISPLAY_NAME = "wcap"
-$WCAP_REGISTRY_INSTALL_DIR = "$WCAP_INSTALL_PATH"
-$WCAP_REGISTRY_NO_MODIFY = 1
-$WCAP_REGISTRY_NO_REPAIR = 1
-$WCAP_REGISTRY_PUBLISHER = "spir0th"
-$WCAP_REGISTRY_UNINSTALL = "powershell -Command `"Set-ExecutionPolicy Unrestricted -Scope Process -Force; . '$WCAP_INSTALL_PATH\uninstall.ps1'`""
-$WCAP_REGISTRY_URL_INFO = "https://github.com/spiroth/wcap"
-
-if ($WCAP_IS_ADMIN) {
-    # Use the HKEY_LOCAL_MACHINE key to store the information on system-wide instead
-    $WCAP_REGISTRY_PATH = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\wcap"
-    
-    # Also append (User) to the program name so that it would not cause conflicts with existing installation
-    $WCAP_REGISTRY_COMMENTS = "wcap (User)"
-    $WCAP_REGISTRY_DISPLAY_NAME = "wcap (User)"
-}
-if (-not(Test-Path $WCAP_REGISTRY_PATH -PathType Container)) {
-    $null = New-Item $WCAP_REGISTRY_PATH -Force
-    $null = New-ItemProperty -Path $WCAP_REGISTRY_PATH -Name "Comments" -Value $WCAP_REGISTRY_COMMENTS -PropertyType String -Force
-    $null = New-ItemProperty -Path $WCAP_REGISTRY_PATH -Name "DisplayIcon" -Value $WCAP_REGISTRY_DISPLAY_ICON -PropertyType String -Force
-    $null = New-ItemProperty -Path $WCAP_REGISTRY_PATH -Name "DisplayName" -Value $WCAP_REGISTRY_DISPLAY_NAME -PropertyType String -Force
-    $null = New-ItemProperty -Path $WCAP_REGISTRY_PATH -Name "InstallLocation" -Value $WCAP_REGISTRY_INSTALL_DIR -PropertyType String -Force
-    $null = New-ItemProperty -Path $WCAP_REGISTRY_PATH -Name "NoModify" -Value $WCAP_REGISTRY_NO_MODIFY -PropertyType Dword -Force
-    $null = New-ItemProperty -Path $WCAP_REGISTRY_PATH -Name "NoRepair" -Value $WCAP_REGISTRY_NO_REPAIR -PropertyType Dword -Force
-    $null = New-ItemProperty -Path $WCAP_REGISTRY_PATH -Name "Publisher" -Value $WCAP_REGISTRY_PUBLISHER -PropertyType String -Force
-    $null = New-ItemProperty -Path $WCAP_REGISTRY_PATH -Name "UninstallString" -Value $WCAP_REGISTRY_UNINSTALL -PropertyType String -Force
-    $null = New-ItemProperty -Path $WCAP_REGISTRY_PATH -Name "URLInfoAbout" -Value $WCAP_REGISTRY_URL_INFO -PropertyType String -Force
-} else {
-    Write-Verbose "wcap has already been added to Apps & Features."
-}
-
-if ($WCAP_EXTRA_ADD_PATH) {
-    Write-Output "Adding wcap to the PATH environment variable"
-    $WCAP_ENV_SCOPE = if ($WCAP_IS_ADMIN) { [EnvironmentVariableTarget]::Machine } else { [EnvironmentVariableTarget]::User }
-    $WCAP_ENV_PATH = [Environment]::GetEnvironmentVariable("Path", $WCAP_ENV_SCOPE)
-
-    if (-not($WCAP_ENV_PATH -split ";" -contains "$WCAP_INSTALL_PATH")) {
-        [Environment]::SetEnvironmentVariable("Path", "$WCAP_ENV_PATH;$WCAP_INSTALL_PATH", $WCAP_ENV_SCOPE)
-        Write-Warning "Restart your shell session to save changes for PATH environment variable."
-    } else {
-        # Warn user that the program is already accessible via PATH and is no longer needed to do this task.
-        Write-Warning "wcap has already been added into the PATH environment variable."
-    }
-}
-if ($WCAP_EXTRA_CREATE_STARTUP) {
-    Write-Output "Creating startup entry for wcap"
-    $WCAP_REGISTRY_PATH = "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
-    $WCAP_REGISTRY_VALUE = "$WCAP_INSTALL_PATH\wcap.exe"
-
-    if (-not(Test-Path $WCAP_REGISTRY_PATH -PathType Container)) {
-        $null = New-Item $WCAP_REGISTRY_PATH -Force
+    if (-not(Test-Path $WcapRegStartupPath -PathType Container)) {
+        Write-Verbose "Creating registry path for startup entry"
+        $null = New-Item $WcapRegStartupPath -Force
     }
     try {
-        $null = Get-ItemProperty -Path $WCAP_REGISTRY_PATH -Name "wcap" -ErrorAction Stop
-        Write-Warning "A startup entry has already been created for wcap."
+        $null = Get-ItemProperty -Path $WcapRegStartupPath -Name "wcap" -ErrorAction Stop
     } catch {
-        $null = New-ItemProperty -Path $WCAP_REGISTRY_PATH -Name "wcap" -Value $WCAP_REGISTRY_VALUE -PropertyType String -Force
+        Write-Verbose "Creating startup entry for wcap"
+        $null = New-ItemProperty -Path $WcapRegStartupPath -Name "wcap" -Value $WcapInstallExecutable -PropertyType String -Force
     }
 }
-if ($WCAP_EXTRA_RUN_AFTER_INSTALL) {
-    $WCAP_EXECUTABLE = "$WCAP_INSTALL_PATH\wcap.exe"
-    Write-Output "Starting $WCAP_EXECUTABLE"
-    Start-Process $WCAP_EXECUTABLE
+if (-not($NoRunAfterInstall)) {
+    Write-Verbose "Starting $WcapInstallExecutable"
+    Start-Process $WcapInstallExecutable
 }
-
-""; "wcap is installed successfully, exiting."

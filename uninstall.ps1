@@ -5,6 +5,7 @@ $WCAP_IS_ADMIN = ([Security.Principal.WindowsPrincipal] [Security.Principal.Wind
 
 $WCAP_INSTALL_PATH = $null
 
+$WCAP_UNINSTALL_SCRIPT = "$env:TEMP\delete_wcap.cmd"
 $WCAP_UNINSTALL_PROCEED = $false
 $WCAP_UNINSTALL_REVIEW = $false
 
@@ -95,19 +96,19 @@ if (Test-Path $WCAP_ADMIN_REGISTRY_PATH -PathType Container) {
     Remove-Item $WCAP_ADMIN_REGISTRY_PATH -Recurse -Force
 }
 
-Write-Verbose "Create delete_wcap.cmd at $env:TEMP"
+Write-Verbose "Creating $WCAP_UNINSTALL_SCRIPT"
 
-if (Test-Path "$env:TEMP\delete_wcap.cmd" -PathType Leaf) {
-    Remove-Item "$env:TEMP\delete_wcap.cmd" -Force
+if (Test-Path $WCAP_UNINSTALL_SCRIPT -PathType Leaf) {
+    Remove-Item $WCAP_UNINSTALL_SCRIPT -Force
 }
 
-Add-Content "$env:TEMP\delete_wcap.cmd" -Value "@echo off"
-Add-Content "$env:TEMP\delete_wcap.cmd" -Value "title"
-Add-Content "$env:TEMP\delete_wcap.cmd" -Value "rd /s /q $WCAP_INSTALL_PATH"
-Add-Content "$env:TEMP\delete_wcap.cmd" -Value "echo wcap is uninstalled successfully."
-Add-Content "$env:TEMP\delete_wcap.cmd" -Value "pause >nul"
+Add-Content $WCAP_UNINSTALL_SCRIPT -Value "@echo off"
+Add-Content $WCAP_UNINSTALL_SCRIPT -Value "title"
+Add-Content $WCAP_UNINSTALL_SCRIPT -Value "taskkill /f /im wcap.exe"
+Add-Content $WCAP_UNINSTALL_SCRIPT -Value "rd /s /q $WCAP_INSTALL_PATH"
+Add-Content $WCAP_UNINSTALL_SCRIPT -Value "echo wcap is uninstalled successfully."
+Add-Content $WCAP_UNINSTALL_SCRIPT -Value "pause >nul"
 
-Write-Output "" # Expect a newline before running the deletion script
 Set-Location (Get-Item $PWD).Parent
-Start-Process "cmd" -ArgumentList "/c $env:TEMP\delete_wcap.cmd" -WorkingDirectory "$env:TEMP"
+Start-Process "cmd" -ArgumentList "/c $WCAP_UNINSTALL_SCRIPT" -WorkingDirectory $env:TEMP
 Remove-Item -Path $MyInvocation.MyCommand.Source

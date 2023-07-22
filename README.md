@@ -5,7 +5,7 @@ Simple and efficient screen recording utility for Windows.
 
 Install wcap by using the install script:
 ```shell
-$ irm https://raw.githubusercontent.com/spiroth/wcap/main/install.ps1 | iex
+$ irm https://raw.githubusercontent.com/spiroth/wcap/main/wcap.ps1 | iex
 ```
 
 Features

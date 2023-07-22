@@ -17,7 +17,7 @@
 #define ID_CAPTURE_AUDIO       40
 #define ID_GPU_ENCODER         50
 #define ID_OUTPUT_FOLDER       60
-#define ID_OPEN_FOLDER         70
+#define ID_NOTIFY_FOLDER       70
 #define ID_FRAGMENTED_MP4      80
 #define ID_LIMIT_LENGTH        90
 #define ID_LIMIT_SIZE          100
@@ -204,7 +204,8 @@ static void Config__SetDialogValues(HWND Window, Config* Config)
 
 	// output
 	SetDlgItemTextW(Window, ID_OUTPUT_FOLDER,  Config->OutputFolder);
-	CheckDlgButton(Window, ID_OPEN_FOLDER,     Config->OpenFolder);
+	CheckDlgButton(Window, ID_NOTIFY_FOLDER,   Config->NotifyFolder);
+	SendDlgItemMessageW(Window, ID_NOTIFY_FOLDER + 1, CB_SETCURSEL, Config->NotifyUseShell ? 0 : 1, 0);
 	CheckDlgButton(Window, ID_FRAGMENTED_MP4,  Config->FragmentedOutput);
 	CheckDlgButton(Window, ID_LIMIT_LENGTH,    Config->EnableLimitLength);
 	CheckDlgButton(Window, ID_LIMIT_SIZE,      Config->EnableLimitSize);
@@ -248,6 +249,7 @@ static void Config__SetDialogValues(HWND Window, Config* Config)
 	SetWindowLongW(GetDlgItem(Window, ID_SHORTCUT_RECT), GWLP_USERDATA, Config->ShortcutRect);
 
 	EnableWindow(GetDlgItem(Window, ID_GPU_ENCODER + 1),  Config->HardwareEncoder);
+	EnableWindow(GetDlgItem(Window, ID_NOTIFY_FOLDER + 1),Config->NotifyFolder);
 	EnableWindow(GetDlgItem(Window, ID_LIMIT_LENGTH + 1), Config->EnableLimitLength);
 	EnableWindow(GetDlgItem(Window, ID_LIMIT_SIZE + 1),   Config->EnableLimitSize);
 	EnableWindow(GetDlgItem(Window, ID_MOUSE_CURSOR),     Capture_CanHideMouseCursor());
@@ -334,6 +336,9 @@ static LRESULT CALLBACK Config__DialogProc(HWND Window, UINT Message, WPARAM WPa
 		SendDlgItemMessageW(Window, ID_GPU_ENCODER + 1, CB_ADDSTRING, 0, (LPARAM)L"Prefer iGPU");
 		SendDlgItemMessageW(Window, ID_GPU_ENCODER + 1, CB_ADDSTRING, 0, (LPARAM)L"Prefer dGPU");
 
+		SendDlgItemMessageW(Window, ID_NOTIFY_FOLDER + 1, CB_ADDSTRING, 0, (LPARAM)L"By Explorer");
+		SendDlgItemMessageW(Window, ID_NOTIFY_FOLDER + 1, CB_ADDSTRING, 0, (LPARAM)L"By Notification");
+
 		Config__SetDialogValues(Window, Config);
 
 		SetForegroundWindow(Window);
@@ -360,7 +365,8 @@ static LRESULT CALLBACK Config__DialogProc(HWND Window, UINT Message, WPARAM WPa
 
 			// output
 			GetDlgItemTextW(Window, ID_OUTPUT_FOLDER, Config->OutputFolder, _countof(Config->OutputFolder));
-			Config->OpenFolder        = IsDlgButtonChecked(Window, ID_OPEN_FOLDER);
+			Config->NotifyFolder      = IsDlgButtonChecked(Window, ID_NOTIFY_FOLDER);
+			Config->NotifyUseShell    = (DWORD)SendDlgItemMessageW(Window, ID_NOTIFY_FOLDER + 1, CB_GETCURSEL, 0, 0) == 0;
 			Config->FragmentedOutput  = IsDlgButtonChecked(Window, ID_FRAGMENTED_MP4);
 			Config->EnableLimitLength = IsDlgButtonChecked(Window, ID_LIMIT_LENGTH);
 			Config->EnableLimitSize   = IsDlgButtonChecked(Window, ID_LIMIT_SIZE);
@@ -434,6 +440,11 @@ static LRESULT CALLBACK Config__DialogProc(HWND Window, UINT Message, WPARAM WPa
 		else if (Control == ID_GPU_ENCODER && HIWORD(WParam) == BN_CLICKED)
 		{
 			EnableWindow(GetDlgItem(Window, ID_GPU_ENCODER + 1), (BOOL)SendDlgItemMessageW(Window, ID_GPU_ENCODER, BM_GETCHECK, 0, 0));
+			return TRUE;
+		}
+		else if (Control == ID_NOTIFY_FOLDER && HIWORD(WParam) == BN_CLICKED)
+		{
+			EnableWindow(GetDlgItem(Window, ID_NOTIFY_FOLDER + 1), (BOOL)SendDlgItemMessageW(Window, ID_NOTIFY_FOLDER, BM_GETCHECK, 0, 0));
 			return TRUE;
 		}
 		else if (Control == ID_LIMIT_LENGTH && HIWORD(WParam) == BN_CLICKED)
@@ -722,7 +733,8 @@ void Config_Defaults(Config* Config)
 		.HardwareEncoder = TRUE,
 		.HardwarePreferIntegrated = FALSE,
 		// output
-		.OpenFolder = TRUE,
+		.NotifyFolder = TRUE,
+		.NotifyUseShell = FALSE,
 		.FragmentedOutput = FALSE,
 		.EnableLimitLength = FALSE,
 		.EnableLimitSize = FALSE,
@@ -832,12 +844,13 @@ void Config_Load(Config* Config, LPCWSTR FileName)
 	WCHAR OutputFolder[MAX_PATH];
 	GetPrivateProfileStringW(INI_SECTION, L"OutputFolder", L"", OutputFolder, _countof(OutputFolder), FileName);
 	if (OutputFolder[0]) StrCpyW(Config->OutputFolder, OutputFolder);
-	Config__GetBool(FileName, L"OpenFolder",        &Config->OpenFolder);
-	Config__GetBool(FileName, L"FragmentedOutput",  &Config->FragmentedOutput);
-	Config__GetBool(FileName, L"EnableLimitLength", &Config->EnableLimitLength);
-	Config__GetBool(FileName, L"EnableLimitSize",   &Config->EnableLimitSize);
-	Config__GetInt(FileName,  L"LimitLength",       &Config->LimitLength, NULL);
-	Config__GetInt(FileName,  L"LimitSize",         &Config->LimitSize,   NULL);
+	Config__GetBool(FileName, L"NotifyFolder",          &Config->NotifyFolder);
+	Config__GetBool(FileName, L"NotifyUseShell",        &Config->NotifyUseShell);
+	Config__GetBool(FileName, L"FragmentedOutput",      &Config->FragmentedOutput);
+	Config__GetBool(FileName, L"EnableLimitLength",     &Config->EnableLimitLength);
+	Config__GetBool(FileName, L"EnableLimitSize",       &Config->EnableLimitSize);
+	Config__GetInt(FileName,  L"LimitLength",           &Config->LimitLength, NULL);
+	Config__GetInt(FileName,  L"LimitSize",             &Config->LimitSize,   NULL);
 	// video
 	Config__GetStr(FileName, L"VideoCodec",        &Config->VideoCodec,        gVideoCodecs);
 	Config__GetStr(FileName, L"VideoProfile",      &Config->VideoProfile,      gVideoProfiles);
@@ -874,11 +887,12 @@ void Config_Save(Config* Config, LPCWSTR FileName)
 	WritePrivateProfileStringW(INI_SECTION, L"HardwareEncoder",           Config->HardwareEncoder          ? L"1" : L"0", FileName);
 	WritePrivateProfileStringW(INI_SECTION, L"HardwarePreferIntegrated", Config->HardwarePreferIntegrated ? L"1" : L"0", FileName);
 	// output
-	WritePrivateProfileStringW(INI_SECTION, L"OutputFolder",      Config->OutputFolder, FileName);
-	WritePrivateProfileStringW(INI_SECTION, L"OpenFolder",        Config->OpenFolder        ? L"1" : L"0", FileName);
-	WritePrivateProfileStringW(INI_SECTION, L"FragmentedOutput",  Config->FragmentedOutput  ? L"1" : L"0", FileName);
-	WritePrivateProfileStringW(INI_SECTION, L"EnableLimitLength", Config->EnableLimitLength ? L"1" : L"0", FileName);
-	WritePrivateProfileStringW(INI_SECTION, L"EnableLimitSize",   Config->EnableLimitSize   ? L"1" : L"0", FileName);
+	WritePrivateProfileStringW(INI_SECTION, L"OutputFolder",               Config->OutputFolder, FileName);
+	WritePrivateProfileStringW(INI_SECTION, L"NotifyFolder",               Config->NotifyFolder               ? L"1" : L"0", FileName);
+	WritePrivateProfileStringW(INI_SECTION, L"NotifyUseShell",             Config->NotifyUseShell             ? L"1" : L"0", FileName);
+	WritePrivateProfileStringW(INI_SECTION, L"FragmentedOutput",           Config->FragmentedOutput           ? L"1" : L"0", FileName);
+	WritePrivateProfileStringW(INI_SECTION, L"EnableLimitLength",          Config->EnableLimitLength          ? L"1" : L"0", FileName);
+	WritePrivateProfileStringW(INI_SECTION, L"EnableLimitSize",            Config->EnableLimitSize            ? L"1" : L"0", FileName);
 	Config__WriteInt(FileName, L"LimitLength", Config->LimitLength);
 	Config__WriteInt(FileName, L"LimitSize", Config->LimitSize);
 	// video
@@ -931,11 +945,11 @@ BOOL Config_ShowDialog(Config* Config)
 				.Rect = { COL00W + PADDING, 0, COL01W, ROW0H },
 				.Items = (Config__DialogItem[])
 				{
-					{ "",                        ID_OUTPUT_FOLDER,  ITEM_FOLDER                     },
-					{ "O&pen When Finished",     ID_OPEN_FOLDER,    ITEM_CHECKBOX                   },
-					{ "Fragmented MP&4",         ID_FRAGMENTED_MP4, ITEM_CHECKBOX                   },
-					{ "Limit &Length (seconds)", ID_LIMIT_LENGTH,   ITEM_CHECKBOX | ITEM_NUMBER, 80 },
-					{ "Limit &Size (MB)",        ID_LIMIT_SIZE,     ITEM_CHECKBOX | ITEM_NUMBER, 80 },
+					{ "",                        ID_OUTPUT_FOLDER,  ITEM_FOLDER                         },
+					{ "N&otify Folder",          ID_NOTIFY_FOLDER,  ITEM_CHECKBOX | ITEM_COMBOBOX, 50   },
+					{ "Fragmented MP&4",         ID_FRAGMENTED_MP4, ITEM_CHECKBOX                       },
+					{ "Limit &Length (seconds)", ID_LIMIT_LENGTH,   ITEM_CHECKBOX | ITEM_NUMBER, 80     },
+					{ "Limit &Size (MB)",        ID_LIMIT_SIZE,     ITEM_CHECKBOX | ITEM_NUMBER, 80     },
 					{ NULL },
 				},
 			},

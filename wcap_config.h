@@ -22,7 +22,8 @@ typedef struct Config {
 	BOOL HardwarePreferIntegrated;
 	// output
 	WCHAR OutputFolder[MAX_PATH];
-	BOOL OpenFolder;
+	BOOL NotifyFolder;
+	BOOL NotifyUseShell;
 	BOOL FragmentedOutput;
 	BOOL EnableLimitLength;
 	BOOL EnableLimitSize;

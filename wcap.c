@@ -332,12 +332,15 @@ static void StopRecording(void)
 
 	Capture_Stop(&gCapture);
 	Encoder_Stop(&gEncoder);
-	if (gConfig.OpenFolder)
+	if (gConfig.NotifyFolder)
 	{
-		ShowFileInFolder(gRecordingPath);
-	} else
-	{
-		ShowNotification(L"The video has been saved.", L"Recording Stopped", NIIF_INFO);
+		if (gConfig.NotifyUseShell)
+		{
+			ShowFileInFolder(gRecordingPath);
+		} else
+		{
+			ShowNotification(L"The video has been saved.", L"Recording Stopped", NIIF_INFO);
+		}
 	}
 
 	SetWindowPos(gWindow, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_HIDEWINDOW | SWP_NOMOVE | SWP_NOSIZE);

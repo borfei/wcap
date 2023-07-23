@@ -743,8 +743,6 @@ void Config_Defaults(Config* Config)
 		// video
 		.VideoCodec = CONFIG_VIDEO_H264,
 		.VideoProfile = CONFIG_VIDEO_HIGH,
-		.VideoMaxWidth = 1920,
-		.VideoMaxHeight = 1080,
 		.VideoMaxFramerate = 60,
 		.VideoBitrate = 8000,
 		// audio

@@ -1272,7 +1272,7 @@ void WinMainCRTStartup()
 
 	PWSTR ConfigDirectoryPath;
 	WCHAR ConfigModuleFilename[64];
-	SHGetKnownFolderPath(&FOLDERID_RoamingAppData, 0, NULL, &ConfigDirectoryPath);
+	SHGetKnownFolderPath(&FOLDERID_RoamingAppData, KF_FLAG_DEFAULT, NULL, &ConfigDirectoryPath);
 	GetModuleFileNameW(NULL, ConfigModuleFilename, _countof(ConfigModuleFilename));
 	StringCchCopyW(ConfigModuleFilename, STRSAFE_MAX_CCH, PathFindFileNameW(ConfigModuleFilename));
 	PathRenameExtensionW(ConfigModuleFilename, L".ini");

@@ -159,7 +159,7 @@ static void Config__UpdateAudioBitrate(HWND Window, DWORD Codec, DWORD AudioBitr
 	}
 	else if (Codec == CONFIG_AUDIO_FLAC)
 	{
-		ComboBox_AddString(Control, L"auto");
+		ComboBox_AddString(Control, L"Auto");
 		ComboBox_SetCurSel(Control, 0);
 	}
 }

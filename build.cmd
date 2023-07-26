@@ -16,6 +16,11 @@ if "%VSCMD_ARG_TGT_ARCH%" neq "x64" (
   exit /b 1
 )
 
+if "%1" equ "clean" (
+  del wcap.exe wcap.exp wcap.lib wcap.pdb >nul
+  del wcap_convert_shader.h wcap_resize_shader.h >nul
+  exit
+)
 if "%1" equ "debug" (
   set CL=/MTd /Od /Zi /D_DEBUG /RTC1 /Fdwcap.pdb /fsanitize=address
   set LINK=/DEBUG

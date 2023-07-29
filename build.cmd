@@ -22,7 +22,8 @@ if "%1" equ "clean" (
   exit
 )
 if "%1" equ "debug" (
-  set CL=/MTd /Od /Zi /D_DEBUG /RTC1 /Fdwcap.pdb /fsanitize=address
+  :: /fsanitize=address <-- temporarily unused
+  set CL=/MTd /Od /Zi /D_DEBUG /RTC1 /Fdwcap.pdb
   set LINK=/DEBUG
 ) else (
   set CL=/GL /O1 /DNDEBUG /GS-

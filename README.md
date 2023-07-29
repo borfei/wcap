@@ -66,6 +66,11 @@ Building
 
 To build the binary from source code, have [Visual Studio][VS] installed, and simply run `build.cmd`.
 
+Debugging
+========
+
+You can use Visual Studio's built-in debugger to debug wcap, or [WinDbg][WDBG].
+
 Changelog
 =========
 
@@ -134,6 +139,7 @@ a compiled binary, for any purpose, commercial or non-commercial, and by any mea
 [wgc]: https://blogs.windows.com/windowsdeveloper/2019/09/16/new-ways-to-do-screen-capture/
 [MSMFH264]: https://docs.microsoft.com/en-us/windows/win32/medfound/h-264-video-encoder
 [VS]: https://visualstudio.microsoft.com/vs/
+[WDBG]: https://learn.microsoft.com/en-us/windows-hardware/drivers/debugger/
 [WASAPI loopback recording]: https://docs.microsoft.com/en-us/windows/win32/coreaudio/loopback-recording
 [MSMFAAC]: https://docs.microsoft.com/en-us/windows/win32/medfound/aac-encoder
 [ffmpeg]: https://ffmpeg.org/

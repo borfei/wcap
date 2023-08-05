@@ -3,10 +3,7 @@ wcap
 
 Simple and efficient screen recording utility for Windows.
 
-Install/update wcap by using the install script:
-```shell
-$ irm https://raw.githubusercontent.com/spiroth/wcap/main/wcap.ps1 | iex
-```
+Try the latest binary here: [wcap.zip][wcap.zip]
 
 Features
 ========
@@ -74,13 +71,35 @@ You can use Visual Studio's built-in debugger to debug wcap, or [WinDbg][WDBG].
 Changelog
 =========
 
+##### 2023.08.05
+ * use discrete graphics card if possible on Enduro systems
+
+<details><summary>older entries</summary>
+<p>
+
+##### 2023.07.26
+ * capitalized `auto` in Audio Bitrate values
+
+##### 2023.07.23
+ * removed default config leftover code
+
+##### 2023.07.22
+ * added ability to notify user between explorer and notification
+
+##### 2023.07.20
+ * store `wcap.ini` in `%AppData%` instead of the program's current path
+
+##### 2023.06.18
+ * create output folder if it does not exist
+ * ask user for prompt when attempting to reset config values
+ * re-added notification on stop of capture
+ * determine current resolution when setting config values to default
+ * fixed a typo in `wcap.ini`
+
 ##### 2022.11.06
  * remove notifications on start & stop of capture
  * remove Windows 10 version check on startup, code always assumes Windows 10
  * support for 10-bit HEVC encoding
-
-<details><summary>older entries</summary>
-<p>
 
 ##### 2021.12.21
  * allow to choose integrated vs discrete GPU to use for encoding

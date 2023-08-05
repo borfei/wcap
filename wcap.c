@@ -39,6 +39,9 @@
 // this is needed to be able to use Nvidia Media Foundation encoders on Optimus systems
 __declspec(dllexport) DWORD NvOptimusEnablement = 1;
 
+// the same case is also applied on Enduro systems
+__declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
+
 #define WM_WCAP_ALREADY_RUNNING (WM_USER+1)
 #define WM_WCAP_STOP_CAPTURE    (WM_USER+2)
 #define WM_WCAP_TRAY_TITLE      (WM_USER+3)
